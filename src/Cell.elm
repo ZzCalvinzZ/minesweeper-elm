@@ -1,4 +1,4 @@
-module Cell exposing (Cell, CellState(..), Msg, renderCell, updateCell)
+module Cell exposing (Cell, CellState(..), Msg, renderCellComponent, updateCellComponent)
 
 import Html exposing (Html, td, text)
 import Html.Attributes exposing (style)
@@ -36,8 +36,8 @@ type Msg
     | CellStopHover
 
 
-updateCell : Msg -> Cell -> Cell
-updateCell msg cell =
+updateCellComponent : Msg -> Cell -> Cell
+updateCellComponent msg cell =
     case msg of
         CellStartHover ->
             { cell | isHovering = True }
@@ -50,8 +50,8 @@ updateCell msg cell =
 -- VIEW
 
 
-renderCell : CellComponent -> Html Msg
-renderCell { cell } =
+renderCellComponent : CellComponent -> Html Msg
+renderCellComponent { cell } =
     td
         [ style "width" "30px"
         , style "height" "30px"

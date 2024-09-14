@@ -9,7 +9,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Random
 import Url
-import Utils exposing (GameConfig, Minefield, generateMinefield)
+import Utils exposing (GameConfig, Minefield, generateMinefield, updateCell)
 
 
 
@@ -87,8 +87,17 @@ update msg model =
             , Cmd.none
             )
 
-        CellMsgReceived row col cell ->
-            ( model, Cmd.none )
+        CellMsgReceived row col cellMsg ->
+            let
+                newMinefield =
+                    case model.minefield of
+                        Just minefield ->
+                            Just (updateCell row col (Cell.updateCellComponent cellMsg) minefield)
+
+                        Nothing ->
+                            Nothing
+            in
+            ( { model | minefield = newMinefield }, Cmd.none )
 
         MinefieldGenerated minefield ->
             ( { model | minefield = Just minefield }, Cmd.none )
@@ -163,7 +172,7 @@ renderRow rowIndex row =
 
 renderCell : Int -> Int -> Cell -> Html Msg
 renderCell rowIndex colIndex cell =
-    Html.map (CellMsgReceived rowIndex colIndex) (Cell.renderCell { rowIndex = rowIndex, colIndex = colIndex, cell = cell })
+    Html.map (CellMsgReceived rowIndex colIndex) (Cell.renderCellComponent { rowIndex = rowIndex, colIndex = colIndex, cell = cell })
 
 
 

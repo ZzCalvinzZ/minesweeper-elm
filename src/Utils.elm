@@ -1,4 +1,4 @@
-module Utils exposing (GameConfig, Minefield, generateMinefield)
+module Utils exposing (GameConfig, Minefield, generateMinefield, updateCell)
 
 import Cell exposing (Cell, CellState(..))
 import List exposing (indexedMap, repeat)
