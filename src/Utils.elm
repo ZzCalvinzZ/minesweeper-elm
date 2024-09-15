@@ -1,4 +1,4 @@
-module Utils exposing (generateMinefield, revealCell, updateCell)
+module Utils exposing (generateMinefield, getCell, revealCell, updateCell)
 
 import List exposing (indexedMap, repeat)
 import List.Extra
@@ -14,7 +14,6 @@ defaultCell : CellType
 defaultCell =
     { state = Unopened
     , hasMine = False
-    , flagged = False
     , surroundingMines = 0
     , isHovering = False
     }

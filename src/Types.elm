@@ -21,7 +21,6 @@ type CellState
 type alias CellType =
     { state : CellState
     , hasMine : Bool
-    , flagged : Bool
     , surroundingMines : Int
     , isHovering : Bool
     }
