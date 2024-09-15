@@ -1,31 +1,11 @@
-module Cell exposing (Cell, CellState(..), Msg, renderCellComponent, updateCellComponent)
+module Cell exposing (Msg, renderCellComponent, updateCellComponent)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave, preventDefaultOn)
 import Json.Decode as Decode
-
-
-type CellState
-    = Unopened
-    | Opened
-    | Flagged
-
-
-type alias Cell =
-    { state : CellState
-    , hasMine : Bool
-    , flagged : Bool
-    , surroundingMines : Int
-    , isHovering : Bool
-    }
-
-
-type alias CellComponent =
-    { rowIndex : Int
-    , colIndex : Int
-    , cell : Cell
-    }
+import Types exposing (CellComponent, CellState(..), Minefield)
+import Utils exposing (revealCell, updateCell)
 
 
 
@@ -36,19 +16,23 @@ type Msg
     = CellStartHover
     | CellStopHover
     | Flag
+    | Reveal
 
 
-updateCellComponent : Msg -> Cell -> Cell
-updateCellComponent msg cell =
+updateCellComponent : Msg -> Int -> Int -> Minefield -> Minefield
+updateCellComponent msg row col minefield =
     case msg of
         CellStartHover ->
-            { cell | isHovering = True }
+            updateCell row col (\cell -> { cell | isHovering = True }) minefield
 
         CellStopHover ->
-            { cell | isHovering = False }
+            updateCell row col (\cell -> { cell | isHovering = False }) minefield
 
         Flag ->
-            { cell | flagged = not cell.flagged }
+            updateCell row col (\cell -> { cell | flagged = not cell.flagged }) minefield
+
+        Reveal ->
+            Debug.log "revealed" (revealCell col row minefield)
 
 
 
@@ -66,15 +50,43 @@ renderCellComponent { cell } =
             , style "display" "flex"
             , style "justify-content" "center"
             , style "align-items" "center"
+            , style "font-size" "24px"
+            , style "font-weight" "bold"
+            , style "cursor" "default"
+            , style "color"
+                (case cell.surroundingMines of
+                    1 ->
+                        "blue"
+
+                    2 ->
+                        "green"
+
+                    3 ->
+                        "red"
+
+                    4 ->
+                        "purple"
+
+                    5 ->
+                        "maroon"
+
+                    _ ->
+                        "black"
+                )
             , style "background-color"
                 (if cell.isHovering then
                     "#d3d7cf"
 
-                 else
+                 else if cell.state == Unopened || cell.state == Flagged then
                     "#babdb6"
+
+                 else
+                    -- Opened
+                    "#d8dad6"
                 )
             , onMouseEnter CellStartHover
             , onMouseLeave CellStopHover
+            , onClick Reveal
             , preventDefaultOn "contextmenu" (Decode.succeed ( Flag, True ))
             ]
             (if cell.flagged then

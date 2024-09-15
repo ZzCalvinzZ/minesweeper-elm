@@ -1,26 +1,16 @@
-module Utils exposing (GameConfig, Minefield, generateMinefield, updateCell)
+module Utils exposing (generateMinefield, revealCell, updateCell)
 
-import Cell exposing (Cell, CellState(..))
 import List exposing (indexedMap, repeat)
+import List.Extra
 import Random exposing (Generator, int)
-
-
-type alias Minefield =
-    List (List Cell)
-
-
-type alias GameConfig =
-    { columns : Int
-    , rows : Int
-    , mines : Int
-    }
+import Types exposing (CellState(..), CellType, GameConfig, Minefield)
 
 
 
 -- Default cell (no mine, not revealed, no surrounding mines)
 
 
-defaultCell : Cell
+defaultCell : CellType
 defaultCell =
     { state = Unopened
     , hasMine = False
@@ -81,7 +71,7 @@ placeMines rows columns remainingMines minefield =
 -- Update a specific cell in the minefield
 
 
-updateCell : Int -> Int -> (Cell -> Cell) -> Minefield -> Minefield
+updateCell : Int -> Int -> (CellType -> CellType) -> Minefield -> Minefield
 updateCell row col updateFunc minefield =
     indexedMap
         (\rIndex rowList ->
@@ -113,3 +103,124 @@ generateMinefield config =
             createEmptyMinefield config.rows config.columns
     in
     placeMines config.rows config.columns config.mines emptyMinefield
+
+
+
+-- Reveal a cell by also revealing neighbors if they can safely be revealed
+
+
+revealCell : Int -> Int -> Minefield -> Minefield
+revealCell col row minefield =
+    let
+        -- Get the main cell at the target row/col
+        mainCell =
+            getCell col row minefield
+
+        -- Check the surrounding cells
+        columns =
+            [ col - 1, col, col + 1 ]
+
+        rows =
+            [ row - 1, row, row + 1 ]
+    in
+    case mainCell of
+        Nothing ->
+            minefield
+
+        Just cell ->
+            if cell.state == Opened || cell.state == Flagged then
+                minefield
+
+            else
+                let
+                    -- Count the surrounding mines
+                    surroundingMines =
+                        countSurroundingMines columns rows minefield
+
+                    _ =
+                        Debug.log "main cell" cell
+
+                    _ =
+                        Debug.log "surroundingMines" surroundingMines
+
+                    -- Update the minefield with the revealed cell
+                    newMinefield =
+                        updateCell row col (\_ -> updateMainCell { cell | surroundingMines = surroundingMines }) minefield
+                in
+                if surroundingMines == 0 then
+                    -- If no surrounding mines, reveal surrounding cells
+                    revealSurroundingCells columns rows newMinefield
+
+                else
+                    -- Otherwise, just return the updated minefield
+                    newMinefield
+
+
+
+-- Function to count surrounding mines
+
+
+countSurroundingMines : List Int -> List Int -> Minefield -> Int
+countSurroundingMines cols rows mf =
+    List.foldl
+        (\c acc ->
+            List.foldl
+                (\r innerAcc ->
+                    case getCell c r mf of
+                        Just cell ->
+                            if cell.hasMine then
+                                innerAcc + 1
+
+                            else
+                                innerAcc
+
+                        Nothing ->
+                            innerAcc
+                )
+                acc
+                rows
+        )
+        0
+        cols
+
+
+
+-- Update cell in the minefield
+
+
+updateMainCell : CellType -> CellType
+updateMainCell cell =
+    { cell | state = Opened }
+
+
+
+-- Reveal the surrounding cells if no surrounding mines
+
+
+revealSurroundingCells : List Int -> List Int -> Minefield -> Minefield
+revealSurroundingCells cols rows mf =
+    List.foldl
+        (\c accMinefield ->
+            List.foldl
+                (\r innerMinefield ->
+                    revealCell c r innerMinefield
+                )
+                accMinefield
+                rows
+        )
+        mf
+        cols
+
+
+
+-- Helper to get a cell safely, returning Maybe Cell
+
+
+getCell : Int -> Int -> Minefield -> Maybe CellType
+getCell c r mf =
+    case List.Extra.getAt r mf of
+        Just rowList ->
+            List.Extra.getAt c rowList
+
+        Nothing ->
+            Nothing

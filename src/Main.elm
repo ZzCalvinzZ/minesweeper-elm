@@ -2,14 +2,14 @@ module Main exposing (Model, Msg(..), init, main, subscriptions, update, view)
 
 import Browser
 import Browser.Navigation as Nav
-import Cell exposing (Cell)
-import Dict exposing (diff)
+import Cell
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Random
+import Types exposing (CellState(..), CellType, Difficulty(..), GameConfig, Minefield)
 import Url
-import Utils exposing (GameConfig, Minefield, generateMinefield, updateCell)
+import Utils exposing (generateMinefield)
 
 
 
@@ -32,12 +32,6 @@ main =
 -- MODEL
 
 
-type Difficulty
-    = Beginner
-    | Intermediate
-    | Expert
-
-
 type alias Model =
     { key : Nav.Key
     , url : Url.Url
@@ -48,7 +42,7 @@ type alias Model =
 
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
-init flags url key =
+init _ url key =
     ( Model key url Nothing Nothing Nothing, Cmd.none )
 
 
@@ -92,8 +86,9 @@ update msg model =
                 newMinefield =
                     case model.minefield of
                         Just minefield ->
-                            Just (updateCell row col (Cell.updateCellComponent cellMsg) minefield)
+                            Just (Cell.updateCellComponent cellMsg row col minefield)
 
+                        -- Just (updateCell row col (Cell.updateCellComponent cellMsg) minefield)
                         Nothing ->
                             Nothing
             in
@@ -137,7 +132,7 @@ view model =
 
 
 initialView : Model -> List (Html Msg)
-initialView model =
+initialView _ =
     [ button [ onClick (Start Beginner) ] [ text "Beginner" ]
     , button [ onClick (Start Intermediate) ] [ text "Intermediate" ]
     , button [ onClick (Start Expert) ] [ text "Expert" ]
@@ -160,7 +155,7 @@ gameView minefield =
 -- Render a row (tr) by mapping over the cells in that row
 
 
-renderRow : Int -> List Cell -> Html Msg
+renderRow : Int -> List CellType -> Html Msg
 renderRow rowIndex row =
     tr []
         (List.indexedMap (renderCell rowIndex) row)
@@ -170,7 +165,7 @@ renderRow rowIndex row =
 -- Render a cell (td) by passing the row and column indexes
 
 
-renderCell : Int -> Int -> Cell -> Html Msg
+renderCell : Int -> Int -> CellType -> Html Msg
 renderCell rowIndex colIndex cell =
     Html.map (CellMsgReceived rowIndex colIndex) (Cell.renderCellComponent { rowIndex = rowIndex, colIndex = colIndex, cell = cell })
 
