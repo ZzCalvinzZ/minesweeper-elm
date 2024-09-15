@@ -1,8 +1,9 @@
 module Cell exposing (Cell, CellState(..), Msg, renderCellComponent, updateCellComponent)
 
-import Html exposing (Html, td, text)
-import Html.Attributes exposing (style)
-import Html.Events exposing (onClick, onMouseEnter, onMouseLeave)
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (onClick, onMouseEnter, onMouseLeave, preventDefaultOn)
+import Json.Decode as Decode
 
 
 type CellState
@@ -34,6 +35,7 @@ type alias CellComponent =
 type Msg
     = CellStartHover
     | CellStopHover
+    | Flag
 
 
 updateCellComponent : Msg -> Cell -> Cell
@@ -45,6 +47,9 @@ updateCellComponent msg cell =
         CellStopHover ->
             { cell | isHovering = False }
 
+        Flag ->
+            { cell | flagged = not cell.flagged }
+
 
 
 -- VIEW
@@ -53,17 +58,37 @@ updateCellComponent msg cell =
 renderCellComponent : CellComponent -> Html Msg
 renderCellComponent { cell } =
     td
-        [ style "width" "30px"
-        , style "height" "30px"
-        , style "border-radius" "3px"
-        , style "background-color"
-            (if cell.isHovering then
-                "#d3d7cf"
+        []
+        [ div
+            [ style "width" "30px"
+            , style "height" "30px"
+            , style "border-radius" "3px"
+            , style "display" "flex"
+            , style "justify-content" "center"
+            , style "align-items" "center"
+            , style "background-color"
+                (if cell.isHovering then
+                    "#d3d7cf"
+
+                 else
+                    "#babdb6"
+                )
+            , onMouseEnter CellStartHover
+            , onMouseLeave CellStopHover
+            , preventDefaultOn "contextmenu" (Decode.succeed ( Flag, True ))
+            ]
+            (if cell.flagged then
+                [ img
+                    [ style "width" "70%"
+                    , style "height" "70%"
+                    , style "margin-left" "6px"
+                    , alt "flag"
+                    , src "./flag.png"
+                    ]
+                    []
+                ]
 
              else
-                "#babdb6"
+                []
             )
-        , onMouseEnter CellStartHover
-        , onMouseLeave CellStopHover
         ]
-        []
