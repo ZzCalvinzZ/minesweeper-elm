@@ -106,24 +106,28 @@ renderCellComponent { model, cell } =
             , style "font-weight" "bold"
             , style "cursor" "default"
             , style "color"
-                (case cell.surroundingMines of
-                    1 ->
-                        "blue"
+                (if cell.hasMine then
+                    "black"
 
-                    2 ->
-                        "green"
+                 else
+                    case cell.surroundingMines of
+                        1 ->
+                            "blue"
 
-                    3 ->
-                        "red"
+                        2 ->
+                            "green"
 
-                    4 ->
-                        "purple"
+                        3 ->
+                            "red"
 
-                    5 ->
-                        "maroon"
+                        4 ->
+                            "purple"
 
-                    _ ->
-                        "black"
+                        5 ->
+                            "maroon"
+
+                        _ ->
+                            "black"
                 )
             , style "background-color"
                 (if model.gameStatus == Won && cell.hasMine == True then
@@ -185,27 +189,12 @@ rendercellContent model cell =
 
 renderFlag : List (Html msg)
 renderFlag =
-    [ img
-        [ style "width" "70%"
-        , style "height" "70%"
-        , style "margin-left" "6px"
-        , alt "🚩"
-        , src "./flag.png"
-        ]
-        []
-    ]
+    [ text "🚩" ]
 
 
 renderMine : List (Html msg)
 renderMine =
-    [ img
-        [ style "width" "70%"
-        , style "height" "70%"
-        , alt "Mine"
-        , src "./mine.png"
-        ]
-        []
-    ]
+    [ text "☀" ]
 
 
 gameIsWonOrLost : Model -> Bool
