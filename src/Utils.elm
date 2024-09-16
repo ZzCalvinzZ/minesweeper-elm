@@ -1,4 +1,4 @@
-module Utils exposing (generateMinefield, getCell, revealCell, updateCell)
+module Utils exposing (anyCellOpenedWithMine, generateMinefield, getCell, revealCell, revealSurrounding, updateCell)
 
 import List exposing (indexedMap, repeat)
 import List.Extra
@@ -217,3 +217,38 @@ getCell c r mf =
 
         Nothing ->
             Nothing
+
+
+revealSurrounding : Int -> Int -> Minefield -> Minefield
+revealSurrounding column row minefield =
+    let
+        columns =
+            [ column - 1, column, column + 1 ]
+
+        rows =
+            [ row - 1, row, row + 1 ]
+    in
+    List.foldl
+        (\c accMinefield ->
+            List.foldl
+                (\r innerMinefield ->
+                    revealCell c r innerMinefield
+                )
+                accMinefield
+                rows
+        )
+        minefield
+        columns
+
+
+anyCellOpenedWithMine : Minefield -> Bool
+anyCellOpenedWithMine minefield =
+    List.any
+        (\row ->
+            List.any
+                (\cell ->
+                    cell.state == Opened && cell.hasMine
+                )
+                row
+        )
+        minefield

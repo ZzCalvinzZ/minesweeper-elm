@@ -5,7 +5,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave, preventDefaultOn)
 import Json.Decode as Decode
 import Types exposing (CellComponent, CellState(..), CellType, GameStatus(..), Minefield, Model)
-import Utils exposing (getCell, revealCell, updateCell)
+import Utils exposing (anyCellOpenedWithMine, getCell, revealCell, revealSurrounding, updateCell)
 
 
 
@@ -15,7 +15,7 @@ import Utils exposing (getCell, revealCell, updateCell)
 type Msg
     = CellStartHover
     | CellStopHover
-    | Flag
+    | FlagOrRevealAllUnflagged
     | Reveal
 
 
@@ -29,35 +29,41 @@ updateCellComponent msg row col model =
         Just minefield ->
             case msg of
                 CellStartHover ->
-                    { model | minefield = Just (updateCell row col (\cell -> { cell | isHovering = True }) minefield) }
+                    { model | minefield = Just (updateCell row col (\c -> { c | isHovering = True }) minefield) }
 
                 CellStopHover ->
-                    { model | minefield = Just (updateCell row col (\cell -> { cell | isHovering = False }) minefield) }
+                    { model | minefield = Just (updateCell row col (\c -> { c | isHovering = False }) minefield) }
 
-                Flag ->
-                    { model
-                        | minefield =
-                            Just
-                                (updateCell
-                                    row
-                                    col
-                                    (\cell ->
-                                        { cell
-                                            | state =
-                                                case cell.state of
-                                                    Unopened ->
-                                                        Flagged
+                FlagOrRevealAllUnflagged ->
+                    let
+                        maybeCell =
+                            getCell col row minefield
+                    in
+                    case maybeCell of
+                        Nothing ->
+                            { model | minefield = Just minefield }
 
-                                                    Flagged ->
-                                                        Unopened
+                        Just cell ->
+                            case cell.state of
+                                Opened ->
+                                    let
+                                        newMinefield =
+                                            revealSurrounding col row minefield
 
-                                                    Opened ->
-                                                        Opened
-                                        }
-                                    )
-                                    minefield
-                                )
-                    }
+                                        newGameStatus =
+                                            if anyCellOpenedWithMine newMinefield then
+                                                Lost
+
+                                            else
+                                                Started
+                                    in
+                                    { model | minefield = Just newMinefield, gameStatus = newGameStatus }
+
+                                Unopened ->
+                                    { model | minefield = Just (updateCell row col (\c -> { c | state = Flagged }) minefield) }
+
+                                Flagged ->
+                                    { model | minefield = Just (updateCell row col (\c -> { c | state = Unopened }) minefield) }
 
                 -- reveal a cell that was clicked
                 Reveal ->
@@ -143,7 +149,7 @@ renderCellComponent { model, cell } =
             , onMouseEnter CellStartHover
             , onMouseLeave CellStopHover
             , onClick Reveal
-            , preventDefaultOn "contextmenu" (Decode.succeed ( Flag, True ))
+            , preventDefaultOn "contextmenu" (Decode.succeed ( FlagOrRevealAllUnflagged, True ))
             ]
             (rendercellContent model cell)
         ]
