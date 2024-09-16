@@ -5377,7 +5377,7 @@ var $elm$random$Random$generate = F2(
 			A2($elm$random$Random$map, tagger, generator));
 	});
 var $author$project$Types$Unopened = 0;
-var $author$project$Utils$defaultCell = {A: false, I: false, u: 0, R: 0};
+var $author$project$Utils$defaultCell = {x: false, I: false, u: 0, R: 0};
 var $elm$core$List$repeatHelp = F3(
 	function (result, n, value) {
 		repeatHelp:
@@ -5511,7 +5511,7 @@ var $author$project$Utils$placeMine = F3(
 						function (cell) {
 							return _Utils_update(
 								cell,
-								{A: true});
+								{x: true});
 						},
 						minefield);
 				}),
@@ -5621,8 +5621,8 @@ var $author$project$Utils$checkGameStatus = function (minefield) {
 							var mineOpen = _v2.c;
 							return _Utils_Tuple3(
 								(cell.u === 1) ? (opened + 1) : opened,
-								cell.A ? (mines + 1) : mines,
-								mineOpen || ((cell.u === 1) && cell.A));
+								cell.x ? (mines + 1) : mines,
+								mineOpen || ((cell.u === 1) && cell.x));
 						}),
 					_Utils_Tuple3(openedAcc, minesAcc, mineOpenAcc),
 					row);
@@ -5693,7 +5693,7 @@ var $author$project$Utils$countSurroundingMines = F3(
 								var _v0 = A3($author$project$Utils$getCell, c, r, mf);
 								if (!_v0.$) {
 									var cell = _v0.a;
-									return cell.A ? (innerAcc + 1) : innerAcc;
+									return cell.x ? (innerAcc + 1) : innerAcc;
 								} else {
 									return innerAcc;
 								}
@@ -6014,69 +6014,34 @@ var $elm$html$Html$Events$preventDefaultOn = F2(
 var $author$project$Cell$gameIsWonOrLost = function (model) {
 	return (model.r === 3) || (model.r === 2);
 };
-var $elm$json$Json$Encode$string = _Json_wrap;
-var $elm$html$Html$Attributes$stringProperty = F2(
-	function (key, string) {
-		return A2(
-			_VirtualDom_property,
-			key,
-			$elm$json$Json$Encode$string(string));
-	});
-var $elm$html$Html$Attributes$alt = $elm$html$Html$Attributes$stringProperty('alt');
-var $elm$html$Html$img = _VirtualDom_node('img');
-var $elm$html$Html$Attributes$src = function (url) {
-	return A2(
-		$elm$html$Html$Attributes$stringProperty,
-		'src',
-		_VirtualDom_noJavaScriptOrHtmlUri(url));
-};
-var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
-var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
+var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
+var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Cell$renderFlag = _List_fromArray(
 	[
-		A2(
-		$elm$html$Html$img,
-		_List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'width', '70%'),
-				A2($elm$html$Html$Attributes$style, 'height', '70%'),
-				A2($elm$html$Html$Attributes$style, 'margin-left', '6px'),
-				$elm$html$Html$Attributes$alt('🚩'),
-				$elm$html$Html$Attributes$src('./flag.png')
-			]),
-		_List_Nil)
+		$elm$html$Html$text('🚩')
 	]);
 var $author$project$Cell$renderMine = _List_fromArray(
 	[
-		A2(
-		$elm$html$Html$img,
-		_List_fromArray(
-			[
-				A2($elm$html$Html$Attributes$style, 'width', '70%'),
-				A2($elm$html$Html$Attributes$style, 'height', '70%'),
-				$elm$html$Html$Attributes$alt('Mine'),
-				$elm$html$Html$Attributes$src('./mine.png')
-			]),
-		_List_Nil)
+		$elm$html$Html$text('☀')
 	]);
-var $elm$virtual_dom$VirtualDom$text = _VirtualDom_text;
-var $elm$html$Html$text = $elm$virtual_dom$VirtualDom$text;
 var $author$project$Cell$rendercellContent = F2(
 	function (model, cell) {
 		var _v0 = cell.u;
 		switch (_v0) {
 			case 2:
-				return ($author$project$Cell$gameIsWonOrLost(model) && cell.A) ? $author$project$Cell$renderMine : $author$project$Cell$renderFlag;
+				return ($author$project$Cell$gameIsWonOrLost(model) && cell.x) ? $author$project$Cell$renderMine : $author$project$Cell$renderFlag;
 			case 0:
-				return ($author$project$Cell$gameIsWonOrLost(model) && cell.A) ? $author$project$Cell$renderMine : _List_Nil;
+				return ($author$project$Cell$gameIsWonOrLost(model) && cell.x) ? $author$project$Cell$renderMine : _List_Nil;
 			default:
-				return ((model.r === 3) && cell.A) ? $author$project$Cell$renderMine : _List_fromArray(
+				return ((model.r === 3) && cell.x) ? $author$project$Cell$renderMine : _List_fromArray(
 					[
 						$elm$html$Html$text(
 						(cell.R > 0) ? $elm$core$String$fromInt(cell.R) : '')
 					]);
 		}
 	});
+var $elm$virtual_dom$VirtualDom$style = _VirtualDom_style;
+var $elm$html$Html$Attributes$style = $elm$virtual_dom$VirtualDom$style;
 var $elm$html$Html$td = _VirtualDom_node('td');
 var $author$project$Cell$renderCellComponent = function (_v0) {
 	var model = _v0.aI;
@@ -6103,26 +6068,30 @@ var $author$project$Cell$renderCellComponent = function (_v0) {
 						$elm$html$Html$Attributes$style,
 						'color',
 						function () {
-							var _v1 = cell.R;
-							switch (_v1) {
-								case 1:
-									return 'blue';
-								case 2:
-									return 'green';
-								case 3:
-									return 'red';
-								case 4:
-									return 'purple';
-								case 5:
-									return 'maroon';
-								default:
-									return 'black';
+							if (cell.x) {
+								return 'black';
+							} else {
+								var _v1 = cell.R;
+								switch (_v1) {
+									case 1:
+										return 'blue';
+									case 2:
+										return 'green';
+									case 3:
+										return 'red';
+									case 4:
+										return 'purple';
+									case 5:
+										return 'maroon';
+									default:
+										return 'black';
+								}
 							}
 						}()),
 						A2(
 						$elm$html$Html$Attributes$style,
 						'background-color',
-						((model.r === 2) && cell.A) ? 'lime' : (((model.r === 3) && cell.A) ? 'red' : (cell.I ? '#d3d7cf' : (((!cell.u) || (cell.u === 2)) ? '#babdb6' : '#d8dad6')))),
+						((model.r === 2) && cell.x) ? 'lime' : (((model.r === 3) && cell.x) ? 'red' : (cell.I ? '#d3d7cf' : (((!cell.u) || (cell.u === 2)) ? '#babdb6' : '#d8dad6')))),
 						$elm$html$Html$Events$onMouseEnter(0),
 						$elm$html$Html$Events$onMouseLeave(1),
 						$elm$html$Html$Events$onClick(3),
