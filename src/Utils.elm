@@ -136,12 +136,6 @@ revealCell col row minefield =
                     surroundingMines =
                         countSurroundingMines columns rows minefield
 
-                    _ =
-                        Debug.log "main cell" cell
-
-                    _ =
-                        Debug.log "surroundingMines" surroundingMines
-
                     -- Update the minefield with the revealed cell
                     newMinefield =
                         updateCell row col (\_ -> updateMainCell { cell | surroundingMines = surroundingMines }) minefield

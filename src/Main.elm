@@ -1,4 +1,4 @@
-module Main exposing (Model, Msg(..), init, main, subscriptions, update, view)
+module Main exposing (Msg(..), init, main, subscriptions, update, view)
 
 import Browser
 import Browser.Navigation as Nav
@@ -7,7 +7,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Random
-import Types exposing (CellState(..), CellType, Difficulty(..), GameConfig, Minefield)
+import Types exposing (CellState(..), CellType, Difficulty(..), GameConfig, GameStatus(..), Minefield, Model)
 import Url
 import Utils exposing (generateMinefield)
 
@@ -32,18 +32,9 @@ main =
 -- MODEL
 
 
-type alias Model =
-    { key : Nav.Key
-    , url : Url.Url
-    , difficulty : Maybe Difficulty
-    , gameConfig : Maybe GameConfig
-    , minefield : Maybe Minefield
-    }
-
-
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init _ url key =
-    ( Model key url Nothing Nothing Nothing, Cmd.none )
+    ( Model key url Nothing Nothing Nothing Select, Cmd.none )
 
 
 
@@ -56,6 +47,7 @@ type Msg
     | LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
     | MinefieldGenerated Minefield
+    | Restart
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -66,7 +58,13 @@ update msg model =
                 config =
                     getConfigForDifficulty difficulty
             in
-            ( { model | gameConfig = Just config, difficulty = Just difficulty }, Random.generate MinefieldGenerated (generateMinefield config) )
+            ( { model
+                | gameConfig = Just config
+                , difficulty = Just difficulty
+                , gameStatus = Started
+              }
+            , Random.generate MinefieldGenerated (generateMinefield config)
+            )
 
         LinkClicked urlRequest ->
             case urlRequest of
@@ -82,20 +80,18 @@ update msg model =
             )
 
         CellMsgReceived row col cellMsg ->
-            let
-                newMinefield =
-                    case model.minefield of
-                        Just minefield ->
-                            Just (Cell.updateCellComponent cellMsg row col minefield)
+            case model.gameStatus of
+                Started ->
+                    ( Cell.updateCellComponent cellMsg row col model, Cmd.none )
 
-                        -- Just (updateCell row col (Cell.updateCellComponent cellMsg) minefield)
-                        Nothing ->
-                            Nothing
-            in
-            ( { model | minefield = newMinefield }, Cmd.none )
+                _ ->
+                    ( model, Cmd.none )
 
         MinefieldGenerated minefield ->
             ( { model | minefield = Just minefield }, Cmd.none )
+
+        Restart ->
+            init () model.url model.key
 
 
 
@@ -121,7 +117,7 @@ view model =
             , div []
                 (case model.minefield of
                     Just minefield ->
-                        gameView minefield
+                        gameView model minefield
 
                     Nothing ->
                         initialView model
@@ -139,15 +135,16 @@ initialView _ =
     ]
 
 
-gameView : Minefield -> List (Html Msg)
-gameView minefield =
+gameView : Model -> Minefield -> List (Html Msg)
+gameView model minefield =
     [ div
         [ style "display" "flex", style "justify-content" "center" ]
         [ table []
             [ tbody []
-                (List.indexedMap renderRow minefield)
+                (List.indexedMap (renderRow model) minefield)
             ]
         ]
+    , div [] (renderLost model)
     ]
 
 
@@ -155,19 +152,35 @@ gameView minefield =
 -- Render a row (tr) by mapping over the cells in that row
 
 
-renderRow : Int -> List CellType -> Html Msg
-renderRow rowIndex row =
+renderRow : Model -> Int -> List CellType -> Html Msg
+renderRow model rowIndex row =
     tr []
-        (List.indexedMap (renderCell rowIndex) row)
+        (List.indexedMap (renderCell model rowIndex) row)
 
 
 
 -- Render a cell (td) by passing the row and column indexes
 
 
-renderCell : Int -> Int -> CellType -> Html Msg
-renderCell rowIndex colIndex cell =
-    Html.map (CellMsgReceived rowIndex colIndex) (Cell.renderCellComponent { rowIndex = rowIndex, colIndex = colIndex, cell = cell })
+renderCell : Model -> Int -> Int -> CellType -> Html Msg
+renderCell model rowIndex colIndex cell =
+    Html.map (CellMsgReceived rowIndex colIndex) (Cell.renderCellComponent { model = model, rowIndex = rowIndex, colIndex = colIndex, cell = cell })
+
+
+
+-- render the extra content to show when losing the gameConfig
+
+
+renderLost : Model -> List (Html Msg)
+renderLost model =
+    case model.gameStatus of
+        Lost ->
+            [ h2 [] [ text "Oh No, you got blowed up :(" ]
+            , div [] [ button [ onClick Restart ] [ text "New game!" ] ]
+            ]
+
+        _ ->
+            []
 
 
 
