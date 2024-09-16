@@ -45,6 +45,7 @@ updateCellComponent msg row col model =
 
                         Just cell ->
                             case cell.state of
+                                -- if opened, we reveal all unflagged cells around the current one
                                 Opened ->
                                     let
                                         newMinefield =
@@ -55,6 +56,7 @@ updateCellComponent msg row col model =
                                         , gameStatus = checkGameStatus newMinefield
                                     }
 
+                                -- if unopened or flagged just add flag or remove flag
                                 Unopened ->
                                     { model | minefield = Just (updateCell row col (\c -> { c | state = Flagged }) minefield) }
 
