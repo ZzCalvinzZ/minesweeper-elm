@@ -5,7 +5,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick, onMouseEnter, onMouseLeave, preventDefaultOn)
 import Json.Decode as Decode
 import Types exposing (CellComponent, CellState(..), CellType, GameStatus(..), Minefield, Model)
-import Utils exposing (anyCellOpenedWithMine, getCell, revealCell, revealSurrounding, updateCell)
+import Utils exposing (checkGameStatus, getCell, revealCell, revealSurrounding, updateCell)
 
 
 
@@ -49,15 +49,11 @@ updateCellComponent msg row col model =
                                     let
                                         newMinefield =
                                             revealSurrounding col row minefield
-
-                                        newGameStatus =
-                                            if anyCellOpenedWithMine newMinefield then
-                                                Lost
-
-                                            else
-                                                Started
                                     in
-                                    { model | minefield = Just newMinefield, gameStatus = newGameStatus }
+                                    { model
+                                        | minefield = Just newMinefield
+                                        , gameStatus = checkGameStatus newMinefield
+                                    }
 
                                 Unopened ->
                                     { model | minefield = Just (updateCell row col (\c -> { c | state = Flagged }) minefield) }
@@ -78,16 +74,11 @@ updateCellComponent msg row col model =
                                 Unopened ->
                                     let
                                         newMinefield =
-                                            Just (revealCell col row minefield)
+                                            revealCell col row minefield
                                     in
                                     { model
-                                        | minefield = newMinefield
-                                        , gameStatus =
-                                            if cell.hasMine then
-                                                Lost
-
-                                            else
-                                                model.gameStatus
+                                        | minefield = Just newMinefield
+                                        , gameStatus = checkGameStatus newMinefield
                                     }
 
                                 _ ->
@@ -133,7 +124,10 @@ renderCellComponent { model, cell } =
                         "black"
                 )
             , style "background-color"
-                (if model.gameStatus == Lost && cell.hasMine == True then
+                (if model.gameStatus == Won && cell.hasMine == True then
+                    "lime"
+
+                 else if model.gameStatus == Lost && cell.hasMine == True then
                     "red"
 
                  else if cell.isHovering then
@@ -159,10 +153,14 @@ rendercellContent : Model -> CellType -> List (Html msg)
 rendercellContent model cell =
     case cell.state of
         Flagged ->
-            renderFlag
+            if gameIsWonOrLost model && cell.hasMine == True then
+                renderMine
+
+            else
+                renderFlag
 
         Unopened ->
-            if model.gameStatus == Lost && cell.hasMine == True then
+            if gameIsWonOrLost model && cell.hasMine == True then
                 renderMine
 
             else
@@ -206,3 +204,8 @@ renderMine =
         ]
         []
     ]
+
+
+gameIsWonOrLost : Model -> Bool
+gameIsWonOrLost model =
+    model.gameStatus == Lost || model.gameStatus == Won

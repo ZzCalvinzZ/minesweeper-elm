@@ -144,7 +144,7 @@ gameView model minefield =
                 (List.indexedMap (renderRow model) minefield)
             ]
         ]
-    , div [] (renderLost model)
+    , div [] (renderWonLost model)
     ]
 
 
@@ -168,14 +168,19 @@ renderCell model rowIndex colIndex cell =
 
 
 
--- render the extra content to show when losing the gameConfig
+-- render the extra content to show when losing the game
 
 
-renderLost : Model -> List (Html Msg)
-renderLost model =
+renderWonLost : Model -> List (Html Msg)
+renderWonLost model =
     case model.gameStatus of
         Lost ->
             [ h2 [] [ text "Oh No, you got blowed up :(" ]
+            , div [] [ button [ onClick Restart ] [ text "New game!" ] ]
+            ]
+
+        Won ->
+            [ h2 [] [ text "Congratulations, you won! :)" ]
             , div [] [ button [ onClick Restart ] [ text "New game!" ] ]
             ]
 

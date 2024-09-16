@@ -1,9 +1,9 @@
-module Utils exposing (anyCellOpenedWithMine, generateMinefield, getCell, revealCell, revealSurrounding, updateCell)
+module Utils exposing (checkGameStatus, generateMinefield, getCell, revealCell, revealSurrounding, updateCell)
 
 import List exposing (indexedMap, repeat)
 import List.Extra
 import Random exposing (Generator, int)
-import Types exposing (CellState(..), CellType, GameConfig, Minefield)
+import Types exposing (CellState(..), CellType, GameConfig, GameStatus(..), Minefield)
 
 
 
@@ -241,14 +241,45 @@ revealSurrounding column row minefield =
         columns
 
 
-anyCellOpenedWithMine : Minefield -> Bool
-anyCellOpenedWithMine minefield =
-    List.any
-        (\row ->
-            List.any
-                (\cell ->
-                    cell.state == Opened && cell.hasMine
+checkGameStatus : Minefield -> GameStatus
+checkGameStatus minefield =
+    let
+        -- Check each cell and accumulate results
+        ( openedCells, totalMines, hasMineOpened ) =
+            List.foldl
+                (\row ( openedAcc, minesAcc, mineOpenAcc ) ->
+                    List.foldl
+                        (\cell ( opened, mines, mineOpen ) ->
+                            ( if cell.state == Opened then
+                                opened + 1
+
+                              else
+                                opened
+                            , if cell.hasMine then
+                                mines + 1
+
+                              else
+                                mines
+                            , mineOpen || (cell.state == Opened && cell.hasMine)
+                            )
+                        )
+                        ( openedAcc, minesAcc, mineOpenAcc )
+                        row
                 )
-                row
-        )
-        minefield
+                ( 0, 0, False )
+                minefield
+
+        totalCells =
+            List.length (List.concat minefield)
+
+        nonMineCells =
+            totalCells - totalMines
+    in
+    if hasMineOpened then
+        Lost
+
+    else if openedCells == nonMineCells then
+        Won
+
+    else
+        Started
