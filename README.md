@@ -30,25 +30,33 @@ The better version would probably fold minefield + config into the `GameStatus` 
 - `Random.Generator` composes really nicely. [`placeMines`](src/Utils.elm) uses `Random.andThen` to chain N mine placements together, and `placeMine` uses `Random.map2` to pick a row and a column at the same time. Once it clicked it felt very natural.
 - Core `List` has no get-by-index. At all. So anything grid-like ends up pulling in `elm-community/list-extra` for `List.Extra.getAt`.
 
-## Things I still want to build
+## TODO
 
-Ideas for later, mostly picked because they'd force me to touch parts of Elm I haven't used yet.
+What's actually built vs. what I still want to add. Mostly picked the unbuilt stuff because it'd force me to touch parts of Elm I haven't used yet.
+
+### Core game
+
+- [x] Difficulty presets (Beginner/Intermediate/Expert) — `getConfigForDifficulty`
+- [x] Random mine placement — `generateMinefield`
+- [x] Reveal a cell on click, flood-fill the empty ones — `revealCell`
+- [x] Flag a cell with right-click — the `Unopened` case in `FlagOrRevealAllUnflagged`
+- [x] Chording (right-click an opened cell to reveal all unflagged neighbors) — `revealSurrounding`
+- [x] Win/loss detection — `checkGameStatus`
+- [x] Restart button
+- [x] Hover highlighting on cells
+- [ ] First click can't be a mine. Real minesweeper does this. Right now [`generateMinefield`](src/Utils.elm) drops mines before you've clicked anything at all, so I'd need to either reroll the board or generate mines after the first click instead.
+- [ ] A timer. Need a subscription for this, [`subscriptions`](src/Main.elm) is just `Sub.none` right now. Probably `Time.every` and a `Tick` message.
+- [ ] Mine counter (mines minus flags placed). Easy one, just a fold over the board.
+- [ ] Pick your own difficulty instead of the three presets. Needs a text input, `String.toInt`, and deciding what happens with bad input — a good excuse to finally use `Result`, which I haven't touched anywhere in this project.
+- [ ] Keyboard controls, arrow keys + space to reveal + f to flag. Would need `Browser.Events.onKeyDown` and a "currently selected cell" concept that doesn't exist yet.
+- [ ] Remember your best time / last difficulty across page reloads. Elm can't touch localStorage by itself so this means writing my first ever port, plus actually using `elm/json` for encoding/decoding (it's a dependency already and I don't use it for anything).
+- [ ] Shareable boards via a seed in the URL. `Url.Parser` is imported in [`Main.elm`](src/Main.elm) already but only for navigation, never actually parsed for anything. Could pair it with `Random.initialSeed`.
 
 ### Fix the model
 
-- Actually do the model refactor from above. Collapse `gameStatus` / `gameConfig` / `minefield` / `difficulty` into one type, something like `Select | Playing {...} | Won {...} | Lost {...}`, and see how much of the `Maybe`-unwrapping nonsense just disappears on its own.
-
-### Actual features
-
-- **First click can't be a mine.** Real minesweeper does this. Right now [`generateMinefield`](src/Utils.elm) drops mines before you've clicked anything at all, so I'd need to either reroll the board or generate mines after the first click instead.
-- **A timer.** Need a subscription for this, [`subscriptions`](src/Main.elm) is just `Sub.none` right now. Probably `Time.every` and a `Tick` message.
-- **Mine counter** (mines minus flags placed). Easy one, just a fold over the board.
-- **Pick your own difficulty** instead of the three presets. Needs a text input, `String.toInt`, and deciding what happens with bad input — a good excuse to finally use `Result`, which I haven't touched anywhere in this project.
-- **Keyboard controls**, arrow keys + space to reveal + f to flag. Would need `Browser.Events.onKeyDown` and a "currently selected cell" concept that doesn't exist yet.
-- **Remember your best time / last difficulty** across page reloads. Elm can't touch localStorage by itself so this means writing my first ever port, plus actually using `elm/json` for encoding/decoding (it's a dependency already and I don't use it for anything).
-- **Shareable boards via a seed in the URL.** `Url.Parser` is imported in [`Main.elm`](src/Main.elm) already but only for navigation, never actually parsed for anything. Could pair it with `Random.initialSeed`.
+- [ ] Actually do the model refactor from above. Collapse `gameStatus` / `gameConfig` / `minefield` / `difficulty` into one type, something like `Select | Playing {...} | Won {...} | Lost {...}`, and see how much of the `Maybe`-unwrapping nonsense just disappears on its own.
 
 ### Tooling I never bothered with
 
-- **elm-test.** Zero tests in this whole repo (`test-dependencies` in `elm.json` is empty, lol). [`checkGameStatus`](src/Utils.elm), [`countSurroundingMines`](src/Utils.elm), and the flood fill are all pure functions just sitting there waiting to be tested.
-- **elm-review.** Never set it up. Codebase is probably big enough now to be worth it.
+- [ ] elm-test. Zero tests in this whole repo (`test-dependencies` in `elm.json` is empty, lol). [`checkGameStatus`](src/Utils.elm), [`countSurroundingMines`](src/Utils.elm), and the flood fill are all pure functions just sitting there waiting to be tested.
+- [ ] elm-review. Never set it up. Codebase is probably big enough now to be worth it.
